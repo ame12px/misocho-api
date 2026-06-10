@@ -39,6 +39,28 @@ app.post("/memos", async (c) => {
   return c.json(body, 201)
 })
 
+app.patch("/memos/:id", async (c) => {
+  const id = Number(c.req.param("id"))
+  const body = await c.req.json()
+  const memo = await prisma.memo.update({
+    where: { id },
+    data: {
+      title: body.title,
+      text: body.text,
+      updatedAt: body.updatedAt,
+      tags: JSON.stringify(body.tags),
+      starred: body.starred,
+    },
+  })
+  return c.json(memo)
+})
+
+app.delete("/memos/:id", async (c) => {
+  const id = Number(c.req.param("id"))
+  await prisma.memo.delete({ where: { id } })
+  return c.json({ success: true })
+})
+
 serve({
   fetch: app.fetch,
   port: 3000,
