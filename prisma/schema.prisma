@@ -1,0 +1,17 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Memo {
+  id        Int     @id @default(autoincrement())
+  title     String
+  text      String
+  createdAt String
+  updatedAt String
+  tags     String  @default("[]")
+  starred   Boolean @default(false)
+}

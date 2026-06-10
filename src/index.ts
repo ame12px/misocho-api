@@ -1,48 +1,47 @@
-import { serve } from "@hono/node-server";
-import { Hono } from "hono";
-import { cors } from "hono/cors";
+import "dotenv/config"
+import { serve } from "@hono/node-server"
+import { Hono } from "hono"
+import { cors } from "hono/cors"
+import { PrismaClient } from "@prisma/client"
+import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3"
 
-type Memo = {
-  id: number;
-  title: string;
-  text: string;
-  createAt: string;
-  updateAt: string;
-  tags: string[];
-  starred: boolean;
-};
+const adapter = new PrismaBetterSqlite3({
+  url: process.env.DATABASE_URL || "file:./prisma/dev.db",
+})
+const prisma = new PrismaClient({ adapter })
 
-const app = new Hono();
+const app = new Hono()
 
 app.use(
   "*",
   cors({
     origin: "http://localhost:5173",
-  }),
-);
+  })
+)
 
-const memos = [
-  { id: 1, title: "最初のメモ", text: "テスト用のデータです" },
-  { id: 2, title: "二番目のメモ", text: "これも仮のデータです" },
-];
-
-app.get("/", (c) => {
-  return c.json({ message: "misocho API" });
-});
-
-app.get("/memos", (c) => {
-  return c.json(memos);
-});
+app.get("/memos", async (c) => {
+  const memos = await prisma.memo.findMany()
+  return c.json(memos)
+})
 
 app.post("/memos", async (c) => {
-  const body = await c.req.json<Memo>();
-  memos.push(body);
-  return c.json(body, 201);
-});
+  const body = await c.req.json()
+  const memo = await prisma.memo.create({
+    data: {
+      title: body.title,
+      text: body.text,
+      createdAt: body.createdAt,
+      updatedAt: body.updatedAt,
+      tags: JSON.stringify(body.tags),
+      starred: body.starred,
+    },
+  })
+  return c.json(body, 201)
+})
 
 serve({
   fetch: app.fetch,
   port: 3000,
-});
+})
 
-console.log("サーバーが起動しました: http://localhost:3000");
+console.log("サーバーが起動しました: http://localhost:3000")
