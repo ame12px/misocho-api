@@ -2,15 +2,11 @@ import "dotenv/config"
 import { serve } from "@hono/node-server"
 import { Hono } from "hono"
 import { cors } from "hono/cors"
-import { PrismaClient } from "@prisma/client"
-import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3"
+import { prisma } from "./lib/prisma.js"
+import { authRouter } from "./auth.js"
+import jwt from "jsonwebtoken"
 
-const adapter = new PrismaBetterSqlite3({
-  url: process.env.DATABASE_URL || "file:./prisma/dev.db",
-})
-const prisma = new PrismaClient({ adapter })
-
-const app = new Hono()
+const app = new Hono<{ Variables: { user: unknown } }>()
 
 app.use(
   "*",
@@ -18,6 +14,23 @@ app.use(
     origin: "http://localhost:5173",
   })
 )
+
+const JWT_SECRET = process.env.JWT_SECRET || "misocho-secret"
+
+app.use("/memos/*", async (c, next) => {
+  const authHeader = c.req.header("Authorization")
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return c.json({ error: "認証が必要です" }, 401)
+  }
+  const token = authHeader.split(" ")[1] ?? ""
+  try {
+    const payload = jwt.verify(token, JWT_SECRET)
+    c.set("user", payload)
+    await next()
+  } catch (e) {
+    return c.json({ error: "トークンが無効です" }, 401)
+  }
+})
 
 app.get("/memos", async (c) => {
   const memos = await prisma.memo.findMany()
@@ -60,6 +73,8 @@ app.delete("/memos/:id", async (c) => {
   await prisma.memo.delete({ where: { id } })
   return c.json({ success: true })
 })
+
+app.route("/auth", authRouter)
 
 serve({
   fetch: app.fetch,
