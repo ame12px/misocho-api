@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "test": "vitest",
-    "postinstall": "prisma generate && prisma migrate deploy"
+    "start": "prisma migrate deploy && tsx src/index.ts",
+    "postinstall": "prisma generate"
   },
   "keywords": [],
   "author": "",
