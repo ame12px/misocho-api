@@ -11,7 +11,7 @@ const app = new Hono<{ Variables: { user: unknown } }>()
 app.use(
   "*",
   cors({
-    origin: "http://localhost:5173",
+    origin: ["http://localhost:5173", "https://misocho-hdsz.vercel.app"],
   })
 )
 
