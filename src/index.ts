@@ -49,7 +49,7 @@ app.post("/memos", async (c) => {
       starred: body.starred,
     },
   })
-  return c.json(body, 201)
+  return c.json(memo, 201)
 })
 
 app.patch("/memos/:id", async (c) => {
