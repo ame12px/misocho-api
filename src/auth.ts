@@ -9,6 +9,12 @@ export const authRouter = new Hono()
 
 authRouter.post("/register", async (c) => {
   const { email, password } = await c.req.json()
+
+  const allowedEmails = (process.env.ALLOWED_EMAILS || "").split(",")
+  if (!allowedEmails.includes(email)) {
+    return c.json({ error: "登録は許可されていません" }, 403)
+  }
+
   const hashed = await bcrypt.hash(password, 10)
   const user = await prisma.user.create({
     data: { email, password: hashed },
