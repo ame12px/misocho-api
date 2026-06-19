@@ -14,6 +14,7 @@ model Memo {
   updatedAt String
   tags     String  @default("[]")
   starred   Boolean @default(false)
+  userId    Int
 }
 
 model User {
